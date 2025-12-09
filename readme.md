@@ -6,7 +6,7 @@ A real-time face mask detection application using Convolutional Neural Network (
 
 - 🎯 Real-time face detection using OpenCV Haar Cascade
 - 🧠 Custom CNN model for mask classification
-- 🎨 Color-coded bounding boxes (Green = Mask, Red = No Mask)
+- 🎨 Color-coded bounding boxes (Green = Mask, Blue = No Mask)
 - 🌐 Interactive web interface with Streamlit
 - 📊 Data augmentation for better model accuracy
 
