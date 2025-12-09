@@ -1,219 +1,280 @@
-# Real-Time Face Mask Detection using CNN & OpenCV
+# Face Mask Detection App 😷
 
-This project detects face masks in real time using a Convolutional Neural Network (CNN) and OpenCV.
+A real-time face mask detection application using Convolutional Neural Network (CNN) and Streamlit web interface.
 
-It uses:
-- A custom CNN model trained in TensorFlow/Keras
-- OpenCV Haar Cascade for face detection
-- Webcam feed for real-time predictions
+## ✨ Features
+
+- 🎯 Real-time face detection using OpenCV Haar Cascade
+- 🧠 Custom CNN model for mask classification
+- 🎨 Color-coded bounding boxes (Green = Mask, Red = No Mask)
+- 🌐 Interactive web interface with Streamlit
+- 📊 Data augmentation for better model accuracy
 
 ## 🧱 Project Structure
 
 ```
 .
-├── mask_detection_training.ipynb   # Jupyter Notebook for training the CNN model
-├── realtime_mask_detection.py      # Python script for real-time mask detection with webcam
-├── mask_detector_model.keras       # Trained model (saved after training)
-├── dataset/                        # Dataset folder (you create this)
-│   ├── with_mask/                  # Images of people wearing masks
-│   └── without_mask/               # Images of people without masks
+├── model.py                # Training script for CNN model
+├── app.py                  # Streamlit web application
+├── mask_detector.h5        # Trained model (generated after training)
+├── Train/                  # Training dataset
+│   ├── WithMask/          # Images with face masks
+│   └── WithoutMask/       # Images without face masks
+├── Test/                   # Testing dataset
+│   ├── WithMask/
+│   └── WithoutMask/
 └── README.md
 ```
 
-## 📂 Dataset Structure
+## 📂 Dataset Setup
 
-Create a folder named `dataset` in the project directory with the following structure:
+Create the following folder structure and add your images:
 
 ```
-dataset/
-    with_mask/
-        img1.jpg
-        img2.jpg
+Train/
+    WithMask/
+        mask_001.jpg
+        mask_002.jpg
         ...
-    without_mask/
-        img10.jpg
-        img11.jpg
+    WithoutMask/
+        no_mask_001.jpg
+        no_mask_002.jpg
+        ...
+
+Test/
+    WithMask/
+        test_mask_001.jpg
+        ...
+    WithoutMask/
+        test_no_mask_001.jpg
         ...
 ```
 
-- `with_mask/` → images of faces wearing masks
-- `without_mask/` → images of faces not wearing masks
+**Note:** You need at least 100+ images in each category for decent results.
 
-The notebook automatically creates training and validation splits using `ImageDataGenerator` with `validation_split=0.2`.
+## 🛠 Installation
 
-## 🛠 Requirements
+### Prerequisites
+- Python 3.8 or higher
+- Webcam (for real-time detection)
 
-Install the required libraries:
+### Install Dependencies
 
 ```bash
-pip install tensorflow opencv-python matplotlib scikit-learn numpy
+pip install tensorflow opencv-python streamlit pillow numpy
 ```
 
-**Note:**
-- Use Python 3.8+ (recommended)
-- If you have a GPU and proper drivers/CUDA installed, TensorFlow can use it automatically.
+Or create a `requirements.txt`:
 
-## 🧠 Model Training (Jupyter Notebook)
+```txt
+tensorflow==2.15.0
+opencv-python==4.8.1.78
+streamlit==1.29.0
+pillow==10.1.0
+numpy==1.24.3
+```
 
-**File:** `mask_detection_training.ipynb`
-
-### Steps:
-
-1. **Open the notebook:**
-   ```bash
-   jupyter notebook mask_detection_training.ipynb
-   ```
-
-2. **Check this variable in the notebook and update if needed:**
-   ```python
-   DATASET_DIR = "dataset"
-   ```
-
-3. **Run all cells in order:**
-   
-   It will:
-   - Load images from `dataset/`
-   - Create training and validation generators
-   - Build a CNN model with:
-     - 3× Conv2D + MaxPooling2D + BatchNorm blocks
-     - Dense(128) + Dropout(0.5)
-     - Output: Dense(1, activation='sigmoid') for binary classification
-   - Train the model for a certain number of epochs
-   - Save the model as:
-     - `mask_detector_model.keras` (best validation accuracy – via ModelCheckpoint)
-     - `mask_detector_model_final.keras` (last epoch)
-
-4. **After successful training, make sure you see:**
-   ```
-   Models saved as 'mask_detector_model.keras' and 'mask_detector_model_final.keras'
-   ```
-
-## 🎥 Real-Time Mask Detection
-
-**File:** `realtime_mask_detection.py`
-
-This script:
-- Loads the trained model (`mask_detector_model.keras`)
-- Uses Haar Cascade for face detection
-- Opens the webcam and detects:
-  - **MASK** → Green box
-  - **NO MASK** → Red box
-
-### Run the Script
-
-Make sure the file `mask_detector_model.keras` is in the same folder as `realtime_mask_detection.py`.
-
-Run:
+Then install:
 ```bash
-python realtime_mask_detection.py
+pip install -r requirements.txt
 ```
 
-A window will open showing:
-- Your webcam feed
-- Detected faces with bounding boxes and labels:
-  - `MASK: 0.xx`
-  - `NO MASK: 0.xx`
+## 🚀 Quick Start
 
-**Press `q` to quit.**
+### Step 1: Train the Model
 
-## 😷 How It Works (Logic)
+1. Prepare your dataset in `Train/` and `Test/` folders
+2. Run the training script:
 
-### Face Detection
-
-Uses OpenCV Haar Cascade:
-
-```python
-cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-face_cascade = cv2.CascadeClassifier(cascade_path)
+```bash
+python model.py
 ```
 
-This avoids the common error:
+**Training details:**
+- Image size: 64×64 pixels
+- Epochs: 20
+- Batch size: 32
+- Optimizer: Adam
+- Data augmentation: Shear, Zoom, Horizontal Flip
+
+After training, you'll see:
 ```
-Can't open file: 'haarcascade_frontalface_default.xml'
-```
-
-### Preprocessing
-
-Each face ROI is:
-- Cropped from the frame
-- Resized to (128, 128)
-- Scaled to [0, 1]
-- Expanded to shape (1, 128, 128, 3) for the CNN
-
-### Prediction
-
-The model outputs a single probability (sigmoid):
-
-```python
-preds = model.predict(face_input)[0][0]
+Model saved as mask_detector.h5
 ```
 
-- If `preds < 0.5` → **MASK**
-- If `preds ≥ 0.5` → **NO MASK**
+### Step 2: Run the Application
 
-### Display
-
-Draws rectangle and text:
-
-```python
-cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-cv2.putText(frame, label_text, (x, y - 10),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+```bash
+streamlit run app.py
 ```
+
+The app will automatically open in your browser at `http://localhost:8501`
+
+### Step 3: Use the App
+
+1. Click **"Open Camera"** button
+2. Allow browser to access your webcam
+3. The app will detect faces and show predictions:
+   - **Green box + "Mask"** = Face mask detected ✅
+   - **Red box + "No Mask"** = No face mask detected ❌
+4. Click **"Close Camera"** to stop
+
+## 🧠 Model Architecture
+
+```
+Input (64x64x3)
+    ↓
+Conv2D (32 filters) + ReLU → MaxPooling
+    ↓
+Conv2D (64 filters) + ReLU → MaxPooling
+    ↓
+Conv2D (128 filters) + ReLU → MaxPooling
+    ↓
+Flatten
+    ↓
+Dense (128) + ReLU
+    ↓
+Dropout (0.5)
+    ↓
+Dense (1) + Sigmoid → Output (0 or 1)
+```
+
+## 😷 How It Works
+
+1. **Face Detection:** OpenCV Haar Cascade detects faces in the video frame
+2. **Preprocessing:** Each face is resized to 64×64 and normalized (0-1)
+3. **Prediction:** CNN model predicts mask probability
+   - Output < 0.5 → **Mask**
+   - Output ≥ 0.5 → **No Mask**
+4. **Visualization:** Bounding box and label drawn on the frame
 
 ## 🧪 Troubleshooting
 
-### 1. Haar Cascade Error
-
-**Error:**
+### Model Not Found
 ```
-ERROR:0@... persistence.cpp:531 cv::FileStorage::Impl::open
-Can't open file: 'haarcascade_frontalface_default.xml' in read mode
-[ERROR] Could not load Haar cascade. Check the XML path.
+OSError: Unable to open file 'mask_detector.h5'
 ```
+**Solution:** Run `python model.py` first to train and save the model.
 
-**Fix:**
-
-In `realtime_mask_detection.py`, we use:
-
-```python
-cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-face_cascade = cv2.CascadeClassifier(cascade_path)
+### Dataset Error
 ```
-
-This automatically uses OpenCV's internal haarcascade folder.
-
-If you still get an error, check:
-```python
-print(cv2.data.haarcascades)
+Found 0 images belonging to 0 classes
 ```
-to see the actual path being used.
+**Solution:** 
+- Verify `Train/` and `Test/` folders exist
+- Ensure images are in `WithMask/` and `WithoutMask/` subfolders
+- Check image formats (jpg, jpeg, png)
 
-### 2. Webcam Not Opening
-
-If you see:
+### Webcam Issues
 ```
-[ERROR] Could not open webcam.
+Failed to grab frame
 ```
-
-**Try:**
-- Check your camera permissions (Windows/Ubuntu/macOS privacy settings).
-- Change camera index:
+**Solutions:**
+- Check camera permissions in OS settings
+- Close other apps using the webcam (Zoom, Skype, etc.)
+- Try different camera index:
   ```python
-  cap = cv2.VideoCapture(1)  # or 2, etc.
+  cam = cv2.VideoCapture(1)  # or 2, 3, etc.
   ```
-- Close any other apps using the webcam.
 
-### 3. Model Not Found
-
-If you get:
+### Haar Cascade Error
 ```
-OSError: No file or directory found at 'mask_detector_model.keras'
+Can't open file: 'haarcascade_frontalface_default.xml'
+```
+**Solution:** The code already uses the correct built-in path. If error persists:
+```python
+print(cv2.data.haarcascades)  # Check the path
 ```
 
-**Make sure:**
-- You ran the training notebook and it saved `mask_detector_model.keras`.
-- The `.py` script and the model file are in the same directory.
-- Or update this line:
-  ```python
-  MODEL_PATH = "path/to/mask_detector_model.keras"
+### Low Accuracy
+**Solutions:**
+- Add more diverse training images (different angles, lighting, backgrounds)
+- Increase epochs: Change `epochs=20` to `epochs=30` or `50`
+- Use larger image size: Change `target_size=(64, 64)` to `(128, 128)`
+- Balance dataset: Equal number of mask/no-mask images
+
+## 📊 Improve Model Performance
+
+```python
+# In model.py, modify these parameters:
+
+# More epochs
+model.fit(..., epochs=50)
+
+# Larger image size
+target_size=(128, 128)
+input_shape=(128, 128, 3)
+
+# Lower learning rate
+optimizer=Adam(learning_rate=0.0001)
+
+# More augmentation
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    rotation_range=20,
+    brightness_range=[0.8, 1.2]
+)
+```
+
+## 🌐 Deploy to Streamlit Cloud
+
+1. Push your code to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect your repository
+4. Add `mask_detector.h5` to your repo
+
+**For deployment, use:**
+```txt
+tensorflow==2.15.0
+opencv-python-headless==4.8.1.78
+streamlit==1.29.0
+pillow==10.1.0
+numpy==1.24.3
+```
+
+Note: Use `opencv-python-headless` for cloud deployment.
+
+## 📸 Screenshots
+
+**Training Output:**
+```
+Found 800 images belonging to 2 classes.
+Found 200 images belonging to 2 classes.
+Epoch 1/20
+25/25 [==============================] - 15s 580ms/step
+...
+Epoch 20/20
+25/25 [==============================] - 12s 490ms/step
+Model saved as mask_detector.h5
+```
+
+**App Interface:**
+- Webcam feed with real-time detection
+- Green/Red bounding boxes
+- "Mask" or "No Mask" labels
+
+## 📝 Tips
+
+- **Better lighting** improves face detection accuracy
+- **Front-facing** poses work best
+- **Clear images** in training data = better results
+- **Balanced dataset** prevents bias (50% mask, 50% no mask)
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Add more features
+- Improve model architecture
+- Enhance UI/UX
+- Fix bugs
+
+## 📄 License
+
+This project is open-source and available for educational purposes.
+
+---
+
+**Made with ❤️ using TensorFlow, OpenCV & Streamlit**
